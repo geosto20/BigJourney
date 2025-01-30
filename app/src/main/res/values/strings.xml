@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">BigJourney</string>
+    <string name="title_activity_sign_in">SignInActivity</string>
+    <string name="title_activity_sign_up">SignUpActivity</string>
+    <string name="title_activity_welcoming_screen">WelcomingScreen</string>
+    <string name="title_my_trips_activity">MyTrips</string>
+    <string name="navigation_drawer_open">Open Drawer</string>
+    <string name="navigation_drawer_close">Close Drawer</string>
+    <string name="title_activity_messages">MessagesActivity</string>
+    <string name="title_activity_images">ImagesActivity</string>
+    <string name="photo">Photo</string>
+</resources>
