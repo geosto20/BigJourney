@@ -1,6 +1,7 @@
 package com.example.bigjourney.adapters
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
@@ -8,17 +9,22 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.bigjourney.FullScreenImageActivity
 import com.example.bigjourney.ImagesActivity
 import com.example.bigjourney.R
 
 class ImageAdapter(
-    private val context: Context,
-    private val imageList: MutableList<Uri>,
-    private val onItemClick: (Uri) -> Unit,
-    private val onItemLongClick: () -> Unit
+    private val imageList: List<Pair<String, String>>,
+    private val onSelectionChanged: (Boolean) -> Unit // Callback για να εμφανίζει το delete button
 ) : RecyclerView.Adapter<ImageAdapter.ImageViewHolder>() {
 
-    private val selectedItems = mutableSetOf<Uri>() // Λίστα για τις επιλεγμένες εικόνες
+    private val selectedImages = mutableSetOf<String>() // Paths των επιλεγμένων εικόνων
+    private var isSelectionMode = false
+
+    class ImageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val imageView: ImageView = itemView.findViewById(R.id.imageViewPhoto)
+        val overlay: View = itemView.findViewById(R.id.selectionOverlay) // Προσθέτουμε ένα view για το selection effect
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_photo, parent, false)
@@ -26,78 +32,57 @@ class ImageAdapter(
     }
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
-        val imageUri = imageList[position]
-        holder.bind(imageUri, selectedItems.contains(imageUri))
+        val (imageUrl, imagePath) = imageList[position]
 
-        // Φόρτωση εικόνας
-        Glide.with(holder.itemView.context)
-            .load(imageUri)
-            .into(holder.imageView)
+        Glide.with(holder.itemView.context).load(imageUrl).into(holder.imageView)
 
-        // Εμφάνιση οπτικής ένδειξης για επιλεγμένα στοιχεία
-        holder.itemView.alpha = if (selectedItems.contains(imageUri)) 0.5f else 1.0f
+        // ✅ Αν η εικόνα είναι επιλεγμένη, εμφανίζουμε overlay
+        holder.overlay.visibility = if (selectedImages.contains(imagePath)) View.VISIBLE else View.GONE
 
-        // Κανονικό κλικ
-        holder.itemView.setOnClickListener {
-            if (selectedItems.isEmpty()) {
-                onItemClick(imageUri) // Άνοιγμα εικόνας
-            } else {
-                toggleSelection(imageUri) // Εναλλαγή επιλογής
-            }
+        holder.itemView.setOnLongClickListener {
+            toggleSelection(imagePath)
+            true
         }
 
-        // Μακροχρόνιο κλικ
-        holder.itemView.setOnLongClickListener {
-            toggleSelection(imageUri) // Εναλλαγή επιλογής
-            onItemLongClick() // Καλούμε το callback
-            true
+        holder.itemView.setOnClickListener {
+            if (isSelectionMode) {
+                toggleSelection(imagePath)
+            } else {
+                // Ανοίγει σε fullscreen αν δεν είναι σε selection mode
+                val intent = Intent(holder.itemView.context, FullScreenImageActivity::class.java).apply {
+                    putExtra("imageUrl", imageUrl)
+                    putExtra("imagePath", imagePath)
+                }
+                holder.itemView.context.startActivity(intent)
+            }
         }
     }
 
     override fun getItemCount(): Int = imageList.size
 
-    fun getSelectedItems(): List<Uri> = selectedItems.toList() // Επιστρέφουμε τις επιλεγμένες εικόνες
-
-    private fun toggleSelection(imageUri: Uri) {
-        if (selectedItems.contains(imageUri)) {
-            selectedItems.remove(imageUri)
+    private fun toggleSelection(imagePath: String) {
+        if (selectedImages.contains(imagePath)) {
+            selectedImages.remove(imagePath)
         } else {
-            selectedItems.add(imageUri)
-        }
-        val index = imageList.indexOf(imageUri)
-        if (index != -1) {
-            notifyItemChanged(index) // Notify only the affected item
+            selectedImages.add(imagePath)
         }
 
-        (context as? ImagesActivity)?.updateActionMode()
+        isSelectionMode = selectedImages.isNotEmpty()
+        onSelectionChanged(isSelectionMode) // ✅ Ενημερώνουμε το UI για να εμφανιστεί το delete button
+
+        notifyDataSetChanged()
     }
 
+    fun getSelectedImages(): List<String> = selectedImages.toList()
 
-    fun deleteSelectedItems() {
-        imageList.removeAll(selectedItems)
-        selectedItems.clear()
-        notifyDataSetChanged() // Refresh only when multiple deletions occur
-    }
-
-    inner class ImageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val imageView: ImageView = itemView.findViewById(R.id.imageView)
-        private val overlay: View = itemView.findViewById(R.id.selectionOverlay)
-
-        fun bind(uri: Uri, isSelected: Boolean) {
-            imageView.setImageURI(uri)
-            overlay.visibility = if (isSelected) View.VISIBLE else View.GONE
-
-            itemView.setOnClickListener {
-                onItemClick(uri)
-            }
-
-            itemView.setOnLongClickListener {
-                toggleSelection(uri)
-                onItemLongClick()
-                true
-            }
-        }
+    fun clearSelection() {
+        selectedImages.clear()
+        isSelectionMode = false
+        notifyDataSetChanged()
     }
 }
+
+
+
 
 

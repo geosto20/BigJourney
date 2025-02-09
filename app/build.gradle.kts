@@ -3,9 +3,13 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.google.gms.google.services)
-    alias(libs.plugins.kapt) // Ενεργοποίηση του kapt
+    id("com.google.devtools.ksp")
+
+
 
 }
+
+
 
 
 android {
@@ -23,7 +27,12 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
     }
+
+
 
     buildTypes {
         release {
@@ -53,17 +62,33 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
 }
+
+
 
 dependencies {
 
-
-
+    implementation(libs.room.ktx)
+    implementation(libs.room.runtime)
+    implementation(libs.material)
+    implementation(libs.json)
+    implementation(libs.okhttp)
+    implementation(libs.android.sdk)
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.runner)
+    implementation(libs.androidx.room.common)
+    implementation(libs.room.ktx)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.firebase.perf.ktx)
+    implementation(libs.play.services.cast.framework)
+    annotationProcessor(libs.glide.compiler)
     implementation(libs.glide)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.storage)
     implementation(libs.firebase.auth)
-    kapt(libs.glide.compiler)
+    ksp(libs.room.compiler)
+
 
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)

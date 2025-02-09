@@ -19,14 +19,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
+import com.google.firebase.storage.FirebaseStorage
 import java.io.File
 
 class ImagesActivity : AppCompatActivity() {
-
     private lateinit var recyclerView: RecyclerView
-    private lateinit var imageAdapter: ImageAdapter
-    private lateinit var imageList: MutableList<Uri>
-    private lateinit var deleteButton: Button // Δήλωση του κουμπιού διαγραφής
+    private lateinit var adapter: ImageAdapter
+    private lateinit var deleteButton: Button
+    private val imageList = mutableListOf<Pair<String, String>>() // URLs + Paths
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,83 +34,62 @@ class ImagesActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerView)
         deleteButton = findViewById(R.id.deleteButton)
+        deleteButton.visibility = View.GONE // Το κρύβουμε αρχικά
 
-        // Αρχικά κρύβουμε το κουμπί διαγραφής
-        deleteButton.visibility = View.GONE
-
-        recyclerView.layoutManager = GridLayoutManager(this, 3)
-        imageList = getAllImages().toMutableList()
-
-        imageAdapter = ImageAdapter(
-            this, // Αντί για itemView.context
-            imageList,
-            onItemClick = { imageUri ->
-                // Άνοιγμα εικόνας σε πλήρη οθόνη
-                val intent = Intent(this, FullScreenImageActivity::class.java)
-                intent.putExtra("imageUri", imageUri.toString())
-                startActivity(intent)
-            },
-            onItemLongClick = {
-                updateActionMode() // Ενημέρωση για τη λειτουργία πολλαπλής επιλογής
-            }
-        )
-        recyclerView.adapter = imageAdapter
-
-        setupDeleteButton()
-    }
-
-    private fun getAllImages(): List<Uri> {
-        val imageUris = mutableListOf<Uri>()
-        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        storageDir?.listFiles()?.forEach {
-            if (it.extension == "jpg") {
-                val uri = Uri.fromFile(it)
-                imageUris.add(uri)
-            }
+        recyclerView.layoutManager = GridLayoutManager(this, 2)
+        adapter = ImageAdapter(imageList) { isSelectionMode ->
+            deleteButton.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
         }
-        return imageUris
-    }
+        recyclerView.adapter = adapter
 
-    private fun setupDeleteButton() {
         deleteButton.setOnClickListener {
-            val selectedItems = imageAdapter.getSelectedItems()
-            if (selectedItems.isNotEmpty()) {
-                deleteImages(selectedItems)
-            } else {
-                Toast.makeText(this, "No images selected", Toast.LENGTH_SHORT).show()
+            deleteSelectedImages()
+        }
+
+        loadImagesFromFirebase()
+    }
+
+    private fun loadImagesFromFirebase() {
+        val storageRef = FirebaseStorage.getInstance().reference.child("images/")
+
+        storageRef.listAll().addOnSuccessListener { listResult ->
+            imageList.clear()
+            for (fileRef in listResult.items) {
+                fileRef.downloadUrl.addOnSuccessListener { uri ->
+                    val imagePath = fileRef.path
+                    imageList.add(Pair(uri.toString(), imagePath))
+                    adapter.notifyDataSetChanged()
+                }
             }
+        }.addOnFailureListener {
+            Toast.makeText(this, "Failed to load images", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun deleteImages(selectedImages: List<Uri>) {
-        selectedImages.forEach { uri ->
-            val file = File(uri.path!!)
-            if (file.exists()) {
-                file.delete()
-            }
+    private fun deleteSelectedImages() {
+        val selectedImages = adapter.getSelectedImages()
+        if (selectedImages.isEmpty()) return
+
+        val storageRef = FirebaseStorage.getInstance().reference
+
+        selectedImages.forEach { imagePath ->
+            storageRef.child(imagePath).delete()
+                .addOnSuccessListener {
+                    Toast.makeText(this, "Deleted successfully", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Failed to delete: ${it.message}", Toast.LENGTH_SHORT).show()
+                }
         }
 
-        // Διαγραφή από τη λίστα και ενημέρωση του RecyclerView
-        imageAdapter.deleteSelectedItems()
-        Toast.makeText(this, "Selected images deleted", Toast.LENGTH_SHORT).show()
-
-        // Κρύβουμε το κουμπί διαγραφής αφού διαγράψουμε
-        deleteButton.visibility = View.GONE
-    }
-
-    fun updateActionMode() {
-        val selectedCount = imageAdapter.getSelectedItems().size
-        if (selectedCount > 0) {
-            // Εμφάνιση του κουμπιού διαγραφής
-            deleteButton.visibility = View.VISIBLE
-            title = "$selectedCount selected"
-        } else {
-            // Απόκρυψη του κουμπιού διαγραφής
-            deleteButton.visibility = View.GONE
-            title = "Gallery"
-        }
+        imageList.removeAll { selectedImages.contains(it.second) }
+        adapter.clearSelection()
+        deleteButton.visibility = View.GONE // Απόκρυψη του κουμπιού
     }
 }
+
+
+
 
 
 

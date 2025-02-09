@@ -3,15 +3,10 @@ package com.example.bigjourney
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.provider.MediaStore
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -27,54 +22,90 @@ import java.util.Date
 import java.util.Locale
 import android.Manifest
 import android.graphics.Color
-import android.net.http.HttpResponseCache.install
 import android.util.Log
 import android.view.MenuItem
-import androidx.activity.OnBackPressedCallback
+import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.view.GravityCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.bigjourney.adapters.TripAdapter
+import com.example.bigjourney.model.Trip
+import com.google.firebase.auth.FirebaseAuth
+
 import com.google.firebase.storage.FirebaseStorage
-
-
-
-
 
 class MyTripsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMyTripsBinding
     private lateinit var cameraLauncher: ActivityResultLauncher<Intent>
+    private lateinit var tripViewModel: TripViewModel
+    private lateinit var tripAdapter: TripAdapter
+    private lateinit var deleteButton: Button
 
     private lateinit var toggle: ActionBarDrawerToggle
 
+
+    private val trips = mutableListOf<Trip>() // Θα κρατάμε τις εγγραφές ταξιδιών
+    private var selectedTrips = mutableSetOf<Trip>() // Επιλεγμένα ταξίδια για διαγραφή
     private val REQUEST_CAMERA_PERMISSION = 2
-    private val REQUEST_IMAGE_CAPTURE = 1
     private lateinit var photoUri: Uri
-
-
-
-
-    // Register the ActivityResultLauncher to take a picture
-    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) {
-            val bitmap = BitmapFactory.decodeFile(photoUri.path)
-            findViewById<ImageView>(R.id.imageView).setImageBitmap(bitmap)
-        } else {
-            Toast.makeText(this, "Image capture failed", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMyTripsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        //setContentView(R.layout.activity_my_trips)
+
+        val recyclerView: RecyclerView = findViewById(R.id.tripsRecyclerView)
+        deleteButton = findViewById(R.id.deleteButton)
+
+        // Αρχικοποίηση ViewModel
+        tripViewModel = ViewModelProvider(this)[TripViewModel::class.java]
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        // Βρες το TextView
+        val noTripsTextView: TextView = findViewById(R.id.noTripsTextView)
+        val noTripsLayout: View = findViewById(R.id.noTripsLayout)
+        val tripsLayout: View = findViewById(R.id.tripsLayout)
+
+
+        tripViewModel.tripList.observe(this) { trips ->
+            if (trips.isEmpty()) {
+                noTripsLayout.visibility = View.VISIBLE
+                tripsLayout.visibility = View.GONE
+                noTripsTextView.visibility = View.VISIBLE
+
+            } else {
+
+                noTripsLayout.visibility = View.GONE
+                tripsLayout.visibility = View.VISIBLE
+                noTripsTextView.visibility = View.GONE
+                this.trips.clear()
+                this.trips.addAll(trips)
+
+                tripAdapter = TripAdapter(trips) { selectedList ->
+                    selectedTrips = selectedList.toMutableSet()
+                    // Εμφάνιση κουμπιού διαγραφής αν υπάρχουν επιλεγμένα ταξίδια
+                    deleteButton.visibility = if (selectedTrips.isEmpty()) View.GONE else View.VISIBLE
+                }
+                recyclerView.adapter = tripAdapter
+            }
+        }
+
+        deleteButton.setOnClickListener {
+            tripViewModel.deleteTrips(selectedTrips.toList())
+            selectedTrips.clear() // Καθαρισμός της λίστας επιλεγμένων
+            tripAdapter.clearSelections()
+            deleteButton.visibility = View.GONE
+        }
 
         val cameraButton: ImageButton = findViewById(R.id.cameraIcon)
         cameraButton.setOnClickListener {
             checkCameraPermission()
         }
-
 
         cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -82,16 +113,7 @@ class MyTripsActivity : AppCompatActivity() {
             }
         }
 
-        val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-
-
-        //Αλλαγη του τίτλου
-        supportActionBar?.title = "BigJourney"
-        toolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.black))
-
-
-         binding.chatIcon.setOnClickListener {
+        binding.chatIcon.setOnClickListener {
             val intent = Intent(this, MessagesActivity::class.java)
             startActivity(intent)
         }
@@ -101,10 +123,21 @@ class MyTripsActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        binding.addIcon.setOnClickListener {
+            val intent = Intent(this, AddTripActivity::class.java)
+            startActivity(intent)
+        }
 
         // Συνδέουμε τα views
-        val drawerLayout : DrawerLayout = findViewById(R.id.drawerLayout)
-        val navView : NavigationView = findViewById(R.id.navigationView)
+        val drawerLayout: DrawerLayout = findViewById(R.id.drawerLayout)
+        val navView: NavigationView = findViewById(R.id.navigationView)
+
+        val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+
+        // Αλλαγη του τίτλου
+        supportActionBar?.title = "BigJourney"
+        toolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.black))
 
         toggle = ActionBarDrawerToggle(this, drawerLayout, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
 
@@ -116,43 +149,17 @@ class MyTripsActivity : AppCompatActivity() {
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        /*onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    drawerLayout.closeDrawer(GravityCompat.START)
-                } else {
-                    remove()  // 🔹 Σιγουρέψου ότι δεν μπλοκάρει το default behavior
-                    onBackPressedDispatcher.onBackPressed()
-                }
-            }
-        })*/
-
-
         // Χειρισμός clicks στο μενού
         navView.setNavigationItemSelectedListener {
-            //Log.d("DrawerClick", "Clicked: ${menuItem.title}") // ✅ Έλεγχος αν καταγράφεται το κλικ
-
-
             when (it.itemId) {
                 R.id.menu_settings -> {
-                    Log.d("DrawerDebug", "Settings clicked")
-                    // Μεταφορά σε Settings Activity
-                    //startActivity(Intent(this, SettingsActivity::class.java))
                     Toast.makeText(this, "Yamete kudasai", Toast.LENGTH_SHORT).show()
-
-
                 }
                 R.id.menu_logout -> {
-                    // Λειτουργία Logout
-                    Log.d("DrawerDebug", "Logout clicked")
                     logoutUser()
-
-
                 }
-
             }
             true
-
         }
     }
 
@@ -164,6 +171,12 @@ class MyTripsActivity : AppCompatActivity() {
     }
 
     private fun logoutUser() {
+
+        FirebaseAuth.getInstance().signOut() // Αποσύνδεση από το Firebase
+
+        val intent = Intent(this, SignInActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK // Καθαρισμός του stack
+        startActivity(intent)
         // Δείξε μήνυμα ή κάνε logout
         Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show()
     }
@@ -185,23 +198,28 @@ class MyTripsActivity : AppCompatActivity() {
         }
     }
 
+    // ✅ Ενημερωμένο `takePictureLauncher` με Firebase Upload
+    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) {
+            uploadImageToFirebase(photoUri) // ✅ Ανέβασμα στο Firebase
+        } else {
+            Toast.makeText(this, "Image capture failed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun openCamera() {
         try {
             val photoFile = createImageFile()
             photoUri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", photoFile)
 
-            // Instead of startActivityForResult, we use takePictureLauncher
-            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-            takePictureLauncher.launch(photoUri)
+            takePictureLauncher.launch(photoUri) // ✅ Χρησιμοποιούμε το Uri
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "Failed to open camera: ${e.message}", Toast.LENGTH_LONG).show()
         }
-
-
-
     }
+
+
 
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -215,6 +233,7 @@ class MyTripsActivity : AppCompatActivity() {
 
 
 
+    // ✅ Βελτιωμένο `uploadImageToFirebase`
     private fun uploadImageToFirebase(fileUri: Uri) {
         val storageRef = FirebaseStorage.getInstance().reference
         val fileRef = storageRef.child("images/${System.currentTimeMillis()}.jpg")
