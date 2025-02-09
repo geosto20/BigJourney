@@ -8,6 +8,7 @@ import java.util.Date
 @Entity
 data class Trip(
     @PrimaryKey(autoGenerate = true) val tid: Int? = null,
+    @ColumnInfo(name = "user_id") val userId: String,
     @ColumnInfo(name = "location") val location: String?,
     @ColumnInfo(name = "start_date") val startDate: Date,
     @ColumnInfo(name = "end_date") val endDate: Date,

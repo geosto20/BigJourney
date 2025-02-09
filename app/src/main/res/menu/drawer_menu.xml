@@ -3,11 +3,60 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <item
-        android:id="@+id/menu_settings"
-        android:title="Settings" />
+    <!-- Κύριες επιλογές -->
+    <group android:id="@+id/group_main">
+        <item
+            android:id="@+id/menu_home"
+            android:icon="@drawable/ic_home"
+            android:title="Home" />
+
+    </group>
+
+    
+
+    <!-- Επιπλέον λειτουργίες -->
+    <group android:id="@+id/group_extra">
+        <item
+            android:id="@+id/menu_favorites"
+            android:icon="@drawable/ic_favorites"
+            android:title="Favorites" />
+        <item
+            android:id="@+id/menu_expenses"
+            android:icon="@drawable/ic_expenses"
+            android:title="Expenses" />
+        <item
+            android:id="@+id/menu_weather"
+            android:icon="@drawable/ic_weather"
+            android:title="Weather" />
+    </group>
+
+
+
+    <!-- Ρυθμίσεις και βοήθεια -->
+    <group android:id="@+id/group_settings">
+        <item
+            android:id="@+id/menu_settings"
+            android:icon="@drawable/ic_settings"
+            android:title="Settings" />
+        <item
+            android:id="@+id/menu_help"
+            android:icon="@drawable/ic_help"
+            android:title="Help &amp; Support" />
+        <item
+            android:id="@+id/menu_about"
+            android:icon="@drawable/ic_info"
+            android:title="About" />
+    </group>
+
+    <!-- Διαχωριστικό -->
+
+
+    <group android:id="@+id/Logout">
+    <!-- Αποσύνδεση -->
     <item
         android:id="@+id/menu_logout"
         android:icon="@drawable/ic_disconnect"
         android:title="Logout" />
+
+    </group>
 </menu>

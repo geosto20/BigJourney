@@ -15,8 +15,10 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.lifecycle.ViewModelProvider
 
 import com.example.bigjourney.model.Trip
+import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -26,16 +28,14 @@ import java.util.Locale
 // AddTripActivity.kt
 class AddTripActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddTripBinding
-    private val tripViewModel: TripViewModel by viewModels()
+    private lateinit var tripViewModel: TripViewModel
     private lateinit var locationEditText: EditText
 
-    // Δημιουργία του ActivityResultLauncher στην κλάση AddTripActivity
     private val getLocationResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             val data = result.data
             val latitude = data?.getDoubleExtra("latitude", 0.0) ?: 0.0
             val longitude = data?.getDoubleExtra("longitude", 0.0) ?: 0.0
-            // Χρησιμοποιούμε τη συνάρτηση για να μετατρέψουμε τις συντεταγμένες σε όνομα περιοχής
             val location = getAddressFromCoordinates(latitude, longitude)
 
             binding.locationEditText.setText(location)
@@ -48,18 +48,27 @@ class AddTripActivity : AppCompatActivity() {
         binding = ActivityAddTripBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        locationEditText = findViewById<EditText>(R.id.locationEditText)
+        locationEditText = findViewById(R.id.locationEditText)
         val startDateEditText = findViewById<EditText>(R.id.startDateEditText)
         val endDateEditText = findViewById<EditText>(R.id.endDateEditText)
         val submitButton = findViewById<Button>(R.id.submitButton)
 
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-        // Calendar instances for date selection
         val startCalendar = Calendar.getInstance()
         val endCalendar = Calendar.getInstance()
 
-        // Show DatePickerDialog when clicking startDateEditText
+        // ✅ Λήψη του userId από το Firebase
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId == null) {
+            Toast.makeText(this, "User not logged in!", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        // ✅ Αρχικοποίηση του ViewModel με το userId
+        tripViewModel = ViewModelProvider(this, TripViewModelFactory(userId))[TripViewModel::class.java]
+
         startDateEditText.setOnClickListener {
             DatePickerDialog(this, { _, year, month, dayOfMonth ->
                 startCalendar.set(year, month, dayOfMonth)
@@ -67,7 +76,6 @@ class AddTripActivity : AppCompatActivity() {
             }, startCalendar.get(Calendar.YEAR), startCalendar.get(Calendar.MONTH), startCalendar.get(Calendar.DAY_OF_MONTH)).show()
         }
 
-        // Show DatePickerDialog when clicking endDateEditText
         endDateEditText.setOnClickListener {
             DatePickerDialog(this, { _, year, month, dayOfMonth ->
                 endCalendar.set(year, month, dayOfMonth)
@@ -89,10 +97,11 @@ class AddTripActivity : AppCompatActivity() {
                 val startDate = dateFormat.parse(startDateText) ?: Date()
                 val endDate = dateFormat.parse(endDateText) ?: Date()
 
+                // ✅ Καλούμε το addTrip με το userId
                 tripViewModel.addTrip(location, startDate, endDate)
 
                 Toast.makeText(this, "Trip added successfully!", Toast.LENGTH_SHORT).show()
-                finish() // Close the activity after saving
+                finish()
             } catch (e: Exception) {
                 Toast.makeText(this, "Invalid date format", Toast.LENGTH_SHORT).show()
             }
@@ -102,8 +111,8 @@ class AddTripActivity : AppCompatActivity() {
             val intent = Intent(this, MapActivity::class.java)
             getLocationResultLauncher.launch(intent)
         }
-
     }
+
 
     fun getAddressFromCoordinates(latitude: Double, longitude: Double): String {
         val geocoder = Geocoder(applicationContext, Locale.getDefault())

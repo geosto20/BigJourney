@@ -7,7 +7,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.bigjourney.model.Trip
 
-@Database(entities = [Trip::class], version = 2, exportSchema = true)
+@Database(entities = [Trip::class], version = 1, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class TripDatabase : RoomDatabase(){
 

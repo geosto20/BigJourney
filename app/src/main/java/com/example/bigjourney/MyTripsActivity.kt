@@ -26,15 +26,18 @@ import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.bigjourney.adapters.TripAdapter
 import com.example.bigjourney.model.Trip
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 
 import com.google.firebase.storage.FirebaseStorage
 
@@ -44,51 +47,96 @@ class MyTripsActivity : AppCompatActivity() {
     private lateinit var tripViewModel: TripViewModel
     private lateinit var tripAdapter: TripAdapter
     private lateinit var deleteButton: Button
-
     private lateinit var toggle: ActionBarDrawerToggle
-
-
-    private val trips = mutableListOf<Trip>() // Θα κρατάμε τις εγγραφές ταξιδιών
-    private var selectedTrips = mutableSetOf<Trip>() // Επιλεγμένα ταξίδια για διαγραφή
-    private val REQUEST_CAMERA_PERMISSION = 2
+    private val trips = mutableListOf<Trip>()
+    private var selectedTrips = mutableSetOf<Trip>()
     private lateinit var photoUri: Uri
+    private val REQUEST_CAMERA_PERMISSION = 2
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityMyTripsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Βρίσκουμε τα στοιχεία στο layout
+        val drawerLayout: DrawerLayout = findViewById(R.id.drawerLayout)
+        val navView: NavigationView = findViewById(R.id.navigationView)
+
+        // Συνδέουμε το Navigation Drawer με το header
+        val headerView = navView.getHeaderView(0)
+        val userNameTextView = headerView.findViewById<TextView>(R.id.user_name)
+        val userEmailTextView = headerView.findViewById<TextView>(R.id.user_email)
+        val profileImageView = headerView.findViewById<ImageView>(R.id.profile_image)
+
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId == null) {
+            Toast.makeText(this, "User not logged in!", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        // Παίρνουμε τον τρέχοντα χρήστη από το Firebase
+        val user: FirebaseUser? = FirebaseAuth.getInstance().currentUser
+        user?.let {
+            userNameTextView.text = it.displayName ?: "No Name"
+            userEmailTextView.text = it.email ?: "No Email"
+
+            // Αν έχει φωτογραφία προφίλ, τη φορτώνουμε
+            it.photoUrl?.let { uri ->
+                Glide.with(this).load(uri).into(profileImageView)
+            }
+        }
+
+        // Toolbar & Navigation Drawer
+        val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = "BigJourney"
+        toolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.black))
+
+        toggle = ActionBarDrawerToggle(this, drawerLayout, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
+        toggle.drawerArrowDrawable.color = Color.BLACK
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        // Χειρισμός επιλογών μενού
+        navView.setNavigationItemSelectedListener {
+            when (it.itemId) {
+                R.id.menu_settings -> {
+                    Toast.makeText(this, "Opening Settings...", Toast.LENGTH_SHORT).show()
+                }
+                R.id.menu_logout -> {
+                    logoutUser()
+                }
+            }
+            true
+        }
+
+        // RecyclerView για τα ταξίδια
         val recyclerView: RecyclerView = findViewById(R.id.tripsRecyclerView)
         deleteButton = findViewById(R.id.deleteButton)
-
-        // Αρχικοποίηση ViewModel
-        tripViewModel = ViewModelProvider(this)[TripViewModel::class.java]
+        tripViewModel = ViewModelProvider(this, TripViewModelFactory(userId))[TripViewModel::class.java]
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // Βρες το TextView
         val noTripsTextView: TextView = findViewById(R.id.noTripsTextView)
         val noTripsLayout: View = findViewById(R.id.noTripsLayout)
         val tripsLayout: View = findViewById(R.id.tripsLayout)
-
 
         tripViewModel.tripList.observe(this) { trips ->
             if (trips.isEmpty()) {
                 noTripsLayout.visibility = View.VISIBLE
                 tripsLayout.visibility = View.GONE
                 noTripsTextView.visibility = View.VISIBLE
-
             } else {
-
                 noTripsLayout.visibility = View.GONE
                 tripsLayout.visibility = View.VISIBLE
                 noTripsTextView.visibility = View.GONE
+
                 this.trips.clear()
                 this.trips.addAll(trips)
 
                 tripAdapter = TripAdapter(trips) { selectedList ->
                     selectedTrips = selectedList.toMutableSet()
-                    // Εμφάνιση κουμπιού διαγραφής αν υπάρχουν επιλεγμένα ταξίδια
                     deleteButton.visibility = if (selectedTrips.isEmpty()) View.GONE else View.VISIBLE
                 }
                 recyclerView.adapter = tripAdapter
@@ -97,69 +145,34 @@ class MyTripsActivity : AppCompatActivity() {
 
         deleteButton.setOnClickListener {
             tripViewModel.deleteTrips(selectedTrips.toList())
-            selectedTrips.clear() // Καθαρισμός της λίστας επιλεγμένων
+            selectedTrips.clear()
             tripAdapter.clearSelections()
             deleteButton.visibility = View.GONE
         }
 
+        // Κουμπί κάμερας
         val cameraButton: ImageButton = findViewById(R.id.cameraIcon)
         cameraButton.setOnClickListener {
             checkCameraPermission()
         }
 
         cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
+            if (result.resultCode == RESULT_OK) {
                 uploadImageToFirebase(photoUri)
             }
         }
 
+        // Κουμπιά κάτω μπάρας
         binding.chatIcon.setOnClickListener {
-            val intent = Intent(this, MessagesActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, MessagesActivity::class.java))
         }
 
         binding.cameraCollectionIcon.setOnClickListener {
-            val intent = Intent(this, ImagesActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, ImagesActivity::class.java))
         }
 
         binding.addIcon.setOnClickListener {
-            val intent = Intent(this, AddTripActivity::class.java)
-            startActivity(intent)
-        }
-
-        // Συνδέουμε τα views
-        val drawerLayout: DrawerLayout = findViewById(R.id.drawerLayout)
-        val navView: NavigationView = findViewById(R.id.navigationView)
-
-        val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-
-        // Αλλαγη του τίτλου
-        supportActionBar?.title = "BigJourney"
-        toolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.black))
-
-        toggle = ActionBarDrawerToggle(this, drawerLayout, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
-
-        // Αλλαγή χρώματος στο hamburger icon σε μαύρο
-        toggle.drawerArrowDrawable.color = Color.BLACK
-
-        drawerLayout.addDrawerListener(toggle)
-        toggle.syncState()
-
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        // Χειρισμός clicks στο μενού
-        navView.setNavigationItemSelectedListener {
-            when (it.itemId) {
-                R.id.menu_settings -> {
-                    Toast.makeText(this, "Yamete kudasai", Toast.LENGTH_SHORT).show()
-                }
-                R.id.menu_logout -> {
-                    logoutUser()
-                }
-            }
-            true
+            startActivity(Intent(this, AddTripActivity::class.java))
         }
     }
 

@@ -37,15 +37,13 @@ class SignInActivity : AppCompatActivity() {
 
                     firebaseAuth.signInWithEmailAndPassword(email, pass).addOnCompleteListener {
                         if (it.isSuccessful) {
-                            // Αποθήκευση της κατάστασης σύνδεσης
-                            //saveUserSession(this)
-
-                            val intent = Intent(this, MyTripsActivity::class.java)
-                            startActivity(intent)
-                            finish()
+                            val userId = firebaseAuth.currentUser?.uid
+                            if (userId != null) {
+                                val intent = Intent(this, MyTripsActivity::class.java)
+                                startActivity(intent)
+                            }
                         } else {
                             Toast.makeText(this, it.exception.toString(), Toast.LENGTH_SHORT).show()
-
                         }
                     }
                 } else {
