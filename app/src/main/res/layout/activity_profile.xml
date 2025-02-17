@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:padding="16dp"
+    tools:context=".ProfileActivity">
+
+    <!-- Profile Image -->
+    <ImageView
+        android:id="@+id/ivProfileImage"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="32dp"
+        android:src="@drawable/ic_profile"
+        android:contentDescription="Profile Image"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
+    <!-- Full Name Field -->
+    <EditText
+        android:id="@+id/etFullName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Full Name"
+        android:inputType="textPersonName"
+        app:layout_constraintTop_toBottomOf="@id/ivProfileImage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Email Field -->
+    <EditText
+        android:id="@+id/etEmail"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        app:layout_constraintTop_toBottomOf="@id/etFullName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Phone Field -->
+    <EditText
+        android:id="@+id/etPhone"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Phone Number"
+        android:inputType="phone"
+        app:layout_constraintTop_toBottomOf="@id/etEmail"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Address Field -->
+    <EditText
+        android:id="@+id/etAddress"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Address"
+        android:inputType="textPostalAddress"
+        app:layout_constraintTop_toBottomOf="@id/etPhone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Job Title -->
+    <EditText
+        android:id="@+id/etJobTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Job Title"
+        app:layout_constraintTop_toBottomOf="@id/etAddress"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Gender Spinner -->
+    <TextView
+        android:id="@+id/textGender"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Gender"
+
+        app:layout_constraintTop_toBottomOf="@id/etJobTitle"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Spinner
+        android:id="@+id/spinnerGender"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:entries="@array/gender_options"
+        app:layout_constraintTop_toBottomOf="@id/etJobTitle"
+        app:layout_constraintStart_toEndOf="@id/textGender"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Social Media Links -->
+    <EditText
+        android:id="@+id/etLinkedIn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="LinkedIn URL"
+        android:inputType="textUri"
+        app:layout_constraintTop_toBottomOf="@id/spinnerGender"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <EditText
+        android:id="@+id/etInstagram"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Instagram URL"
+        android:inputType="textUri"
+        app:layout_constraintTop_toBottomOf="@id/etLinkedIn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Notification Preferences -->
+    <CheckBox
+        android:id="@+id/cbEmailNotifications"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Email Notifications"
+        app:layout_constraintTop_toBottomOf="@id/etInstagram"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <CheckBox
+        android:id="@+id/cbPushNotifications"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Push Notifications"
+        app:layout_constraintTop_toBottomOf="@id/cbEmailNotifications"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Save Button -->
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Save"
+        android:backgroundTint="@color/yellow"
+        app:layout_constraintTop_toBottomOf="@id/cbPushNotifications"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

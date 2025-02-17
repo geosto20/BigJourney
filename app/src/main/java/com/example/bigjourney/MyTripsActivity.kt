@@ -21,7 +21,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
 import android.graphics.Color
+import android.os.Build
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
@@ -30,16 +35,26 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.bigjourney.MainApplication.Companion.tripDatabase
 import com.example.bigjourney.adapters.TripAdapter
+import com.example.bigjourney.database.TripDao
+import com.example.bigjourney.database.TripDatabase
 import com.example.bigjourney.model.Trip
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MyTripsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMyTripsBinding
@@ -53,10 +68,26 @@ class MyTripsActivity : AppCompatActivity() {
     private lateinit var photoUri: Uri
     private val REQUEST_CAMERA_PERMISSION = 2
 
+    private lateinit var tripDao: TripDao
+    private lateinit var tripsNotification: TripsNotification
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMyTripsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val profileNotificationHelper = ProfileNotificationHelper(this)
+        profileNotificationHelper.checkUserProfile(this)
+
+
+        tripDao = tripDatabase.getTripDao()
+        tripsNotification = TripsNotification(this, tripDao)
+        // Καλούμε τη συνάρτηση για να ελέγξουμε τα ταξίδια και να ειδοποιήσουμε αν δεν υπάρχουν
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        userId?.let {
+            tripsNotification.checkUserTripsAndNotify(it)  // Ελέγχουμε αν ο χρήστης έχει ταξίδια
+        }
+
 
         // Βρίσκουμε τα στοιχεία στο layout
         val drawerLayout: DrawerLayout = findViewById(R.id.drawerLayout)
@@ -68,7 +99,7 @@ class MyTripsActivity : AppCompatActivity() {
         val userEmailTextView = headerView.findViewById<TextView>(R.id.user_email)
         val profileImageView = headerView.findViewById<ImageView>(R.id.profile_image)
 
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        //val userId = FirebaseAuth.getInstance().currentUser?.uid
         if (userId == null) {
             Toast.makeText(this, "User not logged in!", Toast.LENGTH_SHORT).show()
             finish()
@@ -103,11 +134,12 @@ class MyTripsActivity : AppCompatActivity() {
         navView.setNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.menu_settings -> {
-                    Toast.makeText(this, "Opening Settings...", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, SettingsActivity::class.java))
                 }
                 R.id.menu_logout -> {
                     logoutUser()
                 }
+
             }
             true
         }
@@ -149,6 +181,13 @@ class MyTripsActivity : AppCompatActivity() {
             tripAdapter.clearSelections()
             deleteButton.visibility = View.GONE
         }
+
+        val profileButton: ImageButton = findViewById(R.id.profileIcon)
+        profileButton.setOnClickListener {
+            val intent = Intent(this, ProfileActivity::class.java)
+            startActivity(intent)
+        }
+
 
         // Κουμπί κάμερας
         val cameraButton: ImageButton = findViewById(R.id.cameraIcon)
@@ -262,6 +301,8 @@ class MyTripsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
+
 
 }
 

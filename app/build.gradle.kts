@@ -69,6 +69,10 @@ android {
 
 dependencies {
 
+    implementation(libs.gms.play.services.location.v2101)
+    implementation(libs.activity.ktx)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.datastore)
     implementation(libs.room.ktx)
     implementation(libs.room.runtime)
     implementation(libs.material)
@@ -82,6 +86,11 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.firebase.perf.ktx)
     implementation(libs.play.services.cast.framework)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.database.ktx)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.recyclerview)
     annotationProcessor(libs.glide.compiler)
     implementation(libs.glide)
     implementation(platform(libs.firebase.bom))

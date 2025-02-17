@@ -4,7 +4,11 @@ import android.os.Bundle
 import android.content.Intent
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.lifecycle.lifecycleScope
 import com.example.bigjourney.databinding.ActivityWelcomingScreenBinding
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class WelcomingScreenActivity : AppCompatActivity() {
 
@@ -12,6 +16,15 @@ class WelcomingScreenActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Έλεγχος του dark mode προτιμήσεων όταν η εφαρμογή ξεκινάει
+        lifecycleScope.launch {
+            // Ανάκτηση της αποθηκευμένης προτίμησης dark mode (προεπιλεγμένο το "false" αν δεν υπάρχει)
+            val isDarkModeEnabled = UserPreferencesManager.darkModePreference(applicationContext).first()
+
+            // Ορισμός του theme σύμφωνα με την προτίμηση
+            setDarkMode(isDarkModeEnabled)
+        }
 
         // Συνδέουμε το layout μέσω του View Binding
         binding = ActivityWelcomingScreenBinding.inflate(layoutInflater)
@@ -33,6 +46,16 @@ class WelcomingScreenActivity : AppCompatActivity() {
             val intent = Intent(this, SignUpActivity::class.java)
             startActivity(intent)
         }
+    }
+
+    // Μέθοδος για την αλλαγή του Dark Mode
+    private fun setDarkMode(isDarkModeEnabled: Boolean) {
+        val nightMode = if (isDarkModeEnabled) {
+            AppCompatDelegate.MODE_NIGHT_YES
+        } else {
+            AppCompatDelegate.MODE_NIGHT_NO
+        }
+        AppCompatDelegate.setDefaultNightMode(nightMode)
     }
 }
 

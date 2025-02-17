@@ -16,6 +16,7 @@ abstract class TripDatabase : RoomDatabase(){
     }
 
     abstract fun getTripDao() : TripDao
+    
 
 
 }
