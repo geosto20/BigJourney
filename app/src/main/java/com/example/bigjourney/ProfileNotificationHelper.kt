@@ -45,7 +45,6 @@ class ProfileNotificationHelper(private val context: Context) {
     }
 
     private fun showProfileIncompleteNotification(context: Context) {
-        // Check if the app has permission to post notifications (for Android 13+)
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             createNotificationChannel(context)
 
@@ -68,18 +67,18 @@ class ProfileNotificationHelper(private val context: Context) {
 
             NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
         } else {
-            // Optionally request permission or handle the case
+
             if (ActivityCompat.shouldShowRequestPermissionRationale(context as Activity, Manifest.permission.POST_NOTIFICATIONS)) {
-                // Show an explanation to the user, for example in a dialog
-                // You could display a dialog explaining why this permission is needed
+
+                // a dialog explaining why this permission is needed
             } else {
-                // Request the permission if it's not granted
+
                 ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), PERMISSION_REQUEST_CODE)
             }
         }
     }
 
-    // Create the notification channel (if not already created)
+
     private fun createNotificationChannel(context: Context) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val name = "Profile Notifications"

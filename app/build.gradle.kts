@@ -69,7 +69,7 @@ android {
 
 dependencies {
 
-    implementation(libs.gms.play.services.location.v2101)
+    implementation (libs.firebase.messaging)
     implementation(libs.activity.ktx)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.datastore)

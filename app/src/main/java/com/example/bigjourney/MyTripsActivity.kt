@@ -1,6 +1,5 @@
 package com.example.bigjourney
 
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -21,12 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
 import android.graphics.Color
-import android.os.Build
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
@@ -35,26 +29,18 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.bigjourney.MainApplication.Companion.tripDatabase
 import com.example.bigjourney.adapters.TripAdapter
 import com.example.bigjourney.database.TripDao
-import com.example.bigjourney.database.TripDatabase
 import com.example.bigjourney.model.Trip
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MyTripsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMyTripsBinding
@@ -82,7 +68,7 @@ class MyTripsActivity : AppCompatActivity() {
 
         tripDao = tripDatabase.getTripDao()
         tripsNotification = TripsNotification(this, tripDao)
-        // Καλούμε τη συνάρτηση για να ελέγξουμε τα ταξίδια και να ειδοποιήσουμε αν δεν υπάρχουν
+
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         userId?.let {
             tripsNotification.checkUserTripsAndNotify(it)  // Ελέγχουμε αν ο χρήστης έχει ταξίδια
@@ -99,20 +85,20 @@ class MyTripsActivity : AppCompatActivity() {
         val userEmailTextView = headerView.findViewById<TextView>(R.id.user_email)
         val profileImageView = headerView.findViewById<ImageView>(R.id.profile_image)
 
-        //val userId = FirebaseAuth.getInstance().currentUser?.uid
+
         if (userId == null) {
             Toast.makeText(this, "User not logged in!", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        // Παίρνουμε τον τρέχοντα χρήστη από το Firebase
+
         val user: FirebaseUser? = FirebaseAuth.getInstance().currentUser
         user?.let {
             userNameTextView.text = it.displayName ?: "No Name"
             userEmailTextView.text = it.email ?: "No Email"
 
-            // Αν έχει φωτογραφία προφίλ, τη φορτώνουμε
+
             it.photoUrl?.let { uri ->
                 Glide.with(this).load(uri).into(profileImageView)
             }
@@ -189,10 +175,16 @@ class MyTripsActivity : AppCompatActivity() {
         }
 
 
-        // Κουμπί κάμερας
+
         val cameraButton: ImageButton = findViewById(R.id.cameraIcon)
         cameraButton.setOnClickListener {
             checkCameraPermission()
+        }
+
+        val chatButton: ImageButton = findViewById(R.id.chatIcon)
+        chatButton.setOnClickListener {
+            val intent = Intent(this, ChatActivity::class.java)
+            startActivity(intent)
         }
 
         cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -201,9 +193,9 @@ class MyTripsActivity : AppCompatActivity() {
             }
         }
 
-        // Κουμπιά κάτω μπάρας
+
         binding.chatIcon.setOnClickListener {
-            startActivity(Intent(this, MessagesActivity::class.java))
+            startActivity(Intent(this, ChatActivity::class.java))
         }
 
         binding.cameraCollectionIcon.setOnClickListener {
@@ -224,12 +216,12 @@ class MyTripsActivity : AppCompatActivity() {
 
     private fun logoutUser() {
 
-        FirebaseAuth.getInstance().signOut() // Αποσύνδεση από το Firebase
+        FirebaseAuth.getInstance().signOut()
 
         val intent = Intent(this, SignInActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK // Καθαρισμός του stack
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
-        // Δείξε μήνυμα ή κάνε logout
+
         Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show()
     }
 
@@ -250,10 +242,10 @@ class MyTripsActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ Ενημερωμένο `takePictureLauncher` με Firebase Upload
+
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
-            uploadImageToFirebase(photoUri) // ✅ Ανέβασμα στο Firebase
+            uploadImageToFirebase(photoUri)
         } else {
             Toast.makeText(this, "Image capture failed", Toast.LENGTH_SHORT).show()
         }
@@ -264,7 +256,7 @@ class MyTripsActivity : AppCompatActivity() {
             val photoFile = createImageFile()
             photoUri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", photoFile)
 
-            takePictureLauncher.launch(photoUri) // ✅ Χρησιμοποιούμε το Uri
+            takePictureLauncher.launch(photoUri)
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "Failed to open camera: ${e.message}", Toast.LENGTH_LONG).show()
@@ -285,7 +277,7 @@ class MyTripsActivity : AppCompatActivity() {
 
 
 
-    // ✅ Βελτιωμένο `uploadImageToFirebase`
+
     private fun uploadImageToFirebase(fileUri: Uri) {
         val storageRef = FirebaseStorage.getInstance().reference
         val fileRef = storageRef.child("images/${System.currentTimeMillis()}.jpg")

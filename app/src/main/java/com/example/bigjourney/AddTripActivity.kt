@@ -25,7 +25,7 @@ import java.util.Date
 import java.util.Locale
 
 
-// AddTripActivity.kt
+
 class AddTripActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddTripBinding
     private lateinit var tripViewModel: TripViewModel
@@ -58,7 +58,6 @@ class AddTripActivity : AppCompatActivity() {
         val startCalendar = Calendar.getInstance()
         val endCalendar = Calendar.getInstance()
 
-        // ✅ Λήψη του userId από το Firebase
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         if (userId == null) {
             Toast.makeText(this, "User not logged in!", Toast.LENGTH_SHORT).show()
@@ -66,7 +65,6 @@ class AddTripActivity : AppCompatActivity() {
             return
         }
 
-        // ✅ Αρχικοποίηση του ViewModel με το userId
         tripViewModel = ViewModelProvider(this, TripViewModelFactory(userId))[TripViewModel::class.java]
 
         startDateEditText.setOnClickListener {
@@ -97,7 +95,7 @@ class AddTripActivity : AppCompatActivity() {
                 val startDate = dateFormat.parse(startDateText) ?: Date()
                 val endDate = dateFormat.parse(endDateText) ?: Date()
 
-                // ✅ Καλούμε το addTrip με το userId
+
                 tripViewModel.addTrip(location, startDate, endDate)
 
                 Toast.makeText(this, "Trip added successfully!", Toast.LENGTH_SHORT).show()
@@ -120,7 +118,6 @@ class AddTripActivity : AppCompatActivity() {
 
         return if (!addresses.isNullOrEmpty()) {
             val address = addresses[0]
-            // Παίρνουμε το όνομα της περιοχής από την Address
             "${address.locality}, ${address.countryName}"
         } else {
             "Address not found"

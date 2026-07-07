@@ -26,7 +26,7 @@ interface TripDao {
     fun getUserTripCount(userId: String): LiveData<Int>
 
     @Query("DELETE FROM Trip WHERE tid IN (:tripIds)")
-    suspend fun deleteTrips(tripIds: List<Long>)  // Η παράμετρος tripIds είναι ο τύπος List<Long>
+    suspend fun deleteTrips(tripIds: List<Long>)
 
 
 }

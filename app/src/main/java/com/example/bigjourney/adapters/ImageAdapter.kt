@@ -1,8 +1,7 @@
 package com.example.bigjourney.adapters
 
-import android.content.Context
+
 import android.content.Intent
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,20 +9,19 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.bigjourney.FullScreenImageActivity
-import com.example.bigjourney.ImagesActivity
 import com.example.bigjourney.R
 
 class ImageAdapter(
     private val imageList: List<Pair<String, String>>,
-    private val onSelectionChanged: (Boolean) -> Unit // Callback για να εμφανίζει το delete button
+    private val onSelectionChanged: (Boolean) -> Unit
 ) : RecyclerView.Adapter<ImageAdapter.ImageViewHolder>() {
 
-    private val selectedImages = mutableSetOf<String>() // Paths των επιλεγμένων εικόνων
+    private val selectedImages = mutableSetOf<String>()
     private var isSelectionMode = false
 
     class ImageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.imageViewPhoto)
-        val overlay: View = itemView.findViewById(R.id.selectionOverlay) // Προσθέτουμε ένα view για το selection effect
+        val overlay: View = itemView.findViewById(R.id.selectionOverlay)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageViewHolder {
@@ -36,7 +34,7 @@ class ImageAdapter(
 
         Glide.with(holder.itemView.context).load(imageUrl).into(holder.imageView)
 
-        // ✅ Αν η εικόνα είναι επιλεγμένη, εμφανίζουμε overlay
+        // Αν η εικόνα είναι επιλεγμένη, εμφανίζουμε overlay
         holder.overlay.visibility = if (selectedImages.contains(imagePath)) View.VISIBLE else View.GONE
 
         holder.itemView.setOnLongClickListener {
@@ -48,7 +46,6 @@ class ImageAdapter(
             if (isSelectionMode) {
                 toggleSelection(imagePath)
             } else {
-                // Ανοίγει σε fullscreen αν δεν είναι σε selection mode
                 val intent = Intent(holder.itemView.context, FullScreenImageActivity::class.java).apply {
                     putExtra("imageUrl", imageUrl)
                     putExtra("imagePath", imagePath)
@@ -68,7 +65,7 @@ class ImageAdapter(
         }
 
         isSelectionMode = selectedImages.isNotEmpty()
-        onSelectionChanged(isSelectionMode) // ✅ Ενημερώνουμε το UI για να εμφανιστεί το delete button
+        onSelectionChanged(isSelectionMode)
 
         notifyDataSetChanged()
     }

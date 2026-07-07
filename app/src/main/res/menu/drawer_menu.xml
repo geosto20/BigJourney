@@ -48,8 +48,6 @@
             android:title="About" />
     </group>
 
-    <!-- Διαχωριστικό -->
-
 
     <group android:id="@+id/Logout">
     <!-- Αποσύνδεση -->

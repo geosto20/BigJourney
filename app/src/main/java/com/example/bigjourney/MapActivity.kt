@@ -29,9 +29,6 @@ import android.widget.Button
 import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
-import android.location.Geocoder
-import android.location.Address
-import java.util.Locale
 
 
 class MapActivity : AppCompatActivity() {
@@ -45,27 +42,27 @@ class MapActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Init MapLibre
+
         MapLibre.getInstance(this)
 
-        // Init layout view
+
         val inflater = LayoutInflater.from(this)
         val rootView = inflater.inflate(R.layout.activity_map, null)
         setContentView(rootView)
 
-        // Init the MapView
+
         mapView = rootView.findViewById(R.id.mapView)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         mapView.getMapAsync { map ->
             mapLibreMap = map
-            map.setStyle("https://api.maptiler.com/maps/streets/style.json?key=yWJKPGOBYtl9xXIPD3Bk") { // Χρησιμοποιούμε ένα ελαφρύ στυλ
+            map.setStyle("https://api.maptiler.com/maps/streets/style.json?key=yWJKPGOBYtl9xXIPD3Bk") {
                 enableLocationComponent()
             }
 
             setupSearch()
 
-            // Προσθήκη του κουμπιού για επιστροφή στην τοποθεσία του χρήστη
+
             val buttonLocate = findViewById<Button>(R.id.buttonLocate)
             buttonLocate.setOnClickListener {
                 returnToUserLocation()
@@ -129,7 +126,6 @@ class MapActivity : AppCompatActivity() {
             .build()
 
         mapLibreMap.cameraPosition = position
-        // Επιστρέφουμε τις συντεταγμένες στην Activity που κάλεσε τον χάρτη
         val resultIntent = Intent()
         resultIntent.putExtra("latitude", lat)
         resultIntent.putExtra("longitude", lon)

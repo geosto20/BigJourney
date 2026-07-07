@@ -19,7 +19,7 @@ class TripsNotification(private val context: Context, private val tripDao: TripD
     private val CHANNEL_ID = "TRIPS_CHANNEL"
     private val NOTIFICATION_ID = 1
 
-    // Δημιουργία του notification channel για Android 8+ (Oreo και πάνω)
+    // notification channel για Android 8+
     private fun createNotificationChannel() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val name = "Trips Notification Channel"
@@ -35,12 +35,12 @@ class TripsNotification(private val context: Context, private val tripDao: TripD
 
     // Εμφάνιση ειδοποίησης όταν δεν υπάρχουν προγραμματισμένα ταξίδια
     fun showAddTripNotification() {
-        // Έλεγχος αν έχουμε άδεια για να στείλουμε ειδοποιήσεις
+        // Έλεγχος άδειας
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            // Δημιουργία του notification channel (Αν δεν έχει δημιουργηθεί ήδη)
+
             createNotificationChannel()
 
-            // Δημιουργία του Intent που θα ανοίξει το AddTripActivity όταν πατηθεί η ειδοποίηση
+
             val intent = Intent(context, AddTripActivity::class.java)
             val pendingIntent = PendingIntent.getActivity(
                 context,
@@ -49,7 +49,7 @@ class TripsNotification(private val context: Context, private val tripDao: TripD
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            // Δημιουργία του notification
+            // notification
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("No Upcoming Trips")
@@ -63,9 +63,7 @@ class TripsNotification(private val context: Context, private val tripDao: TripD
             val notificationManager = NotificationManagerCompat.from(context)
             notificationManager.notify(NOTIFICATION_ID, notification)
         } else {
-            // Αν δεν έχουμε την άδεια, ζητάμε την άδεια
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // Για Android 13 και πάνω
                 ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
             }
         }
@@ -76,10 +74,8 @@ class TripsNotification(private val context: Context, private val tripDao: TripD
 
     // Έλεγχος αν υπάρχουν ταξίδια για τον χρήστη και εμφάνιση ειδοποίησης αν δεν υπάρχουν
     fun checkUserTripsAndNotify(userId: String) {
-        // Χρησιμοποιούμε το LiveData για να παρακολουθήσουμε το count των ταξιδιών
         tripDao.getUserTripCount(userId).observeForever { tripCount ->
             if (tripCount == 0) {
-                // Αφαιρούμε το userId καθώς δεν χρειάζεται για την ειδοποίηση
                 showAddTripNotification()
             }
         }

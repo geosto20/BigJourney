@@ -39,7 +39,7 @@ class FullScreenImageActivity : AppCompatActivity() {
 
         storageRef.delete().addOnSuccessListener {
             Toast.makeText(this, "Image deleted successfully", Toast.LENGTH_SHORT).show()
-            finish() // Κλείνει το activity μετά τη διαγραφή
+            finish()
         }.addOnFailureListener {
             Toast.makeText(this, "Failed to delete image", Toast.LENGTH_SHORT).show()
         }

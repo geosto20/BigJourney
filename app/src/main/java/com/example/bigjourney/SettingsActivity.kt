@@ -16,15 +16,15 @@ class SettingsActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_settings)
 
-        // Ανάκτηση του SwitchCompat από το layout
+
         darkModeSwitch = findViewById(R.id.darkModeSwitch)
 
-        // Παρακολούθηση της κατάστασης Dark Mode
+        //κατάσταση Dark Mode
         lifecycleScope.launch {
             val isDarkModeEnabled = UserPreferencesManager.darkModePreference(applicationContext).first()
-            // Ρύθμιση της κατάστασης του switch
+
             darkModeSwitch.isChecked = isDarkModeEnabled
-            // Ενημέρωση του theme
+
             setDarkMode(isDarkModeEnabled)
         }
 

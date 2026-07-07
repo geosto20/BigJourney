@@ -26,7 +26,7 @@ class ImagesActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ImageAdapter
     private lateinit var deleteButton: Button
-    private val imageList = mutableListOf<Pair<String, String>>() // URLs + Paths
+    private val imageList = mutableListOf<Pair<String, String>>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +34,7 @@ class ImagesActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerView)
         deleteButton = findViewById(R.id.deleteButton)
-        deleteButton.visibility = View.GONE // Το κρύβουμε αρχικά
+        deleteButton.visibility = View.GONE
 
         recyclerView.layoutManager = GridLayoutManager(this, 2)
         adapter = ImageAdapter(imageList) { isSelectionMode ->
@@ -84,7 +84,7 @@ class ImagesActivity : AppCompatActivity() {
 
         imageList.removeAll { selectedImages.contains(it.second) }
         adapter.clearSelection()
-        deleteButton.visibility = View.GONE // Απόκρυψη του κουμπιού
+        deleteButton.visibility = View.GONE
     }
 }
 

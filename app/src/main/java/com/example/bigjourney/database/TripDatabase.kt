@@ -23,15 +23,12 @@ abstract class TripDatabase : RoomDatabase(){
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // Προσθήκη της νέας στήλης στη βάση
         db.execSQL("ALTER TABLE Trip ADD COLUMN new_column TEXT DEFAULT 'undefined'")
     }
 }
 
 val MIGRATION_2_1 = object : Migration(2, 1) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // Αφαίρεση της στήλης ή άλλης αλλαγής που έχει γίνει
-        // Πχ, να αφαιρέσουμε την στήλη 'new_column' αν την προσθέσαμε
         db.execSQL("CREATE TABLE Trip_new AS SELECT tid, location, start_date, end_date FROM Trip")
         db.execSQL("DROP TABLE Trip")
         db.execSQL("ALTER TABLE Trip_new RENAME TO Trip")

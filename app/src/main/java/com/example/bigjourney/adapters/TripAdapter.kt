@@ -33,13 +33,13 @@ class TripAdapter(
         holder.tripLocation.text = trip.location
         holder.tripDates.text = "${trip.startDate} - ${trip.endDate}"
 
-        // Ελέγχουμε αν το στοιχείο είναι επιλεγμένο
+
         holder.tripItemLayout.setBackgroundColor(
             if (selectedTrips.contains(position)) Color.LTGRAY else Color.TRANSPARENT
         )
 
         holder.itemView.setOnLongClickListener {
-            // Προσθήκη στην επιλογή
+
             selectedTrips.add(position)
             onDeleteSelected(trips.filterIndexed { index, _ -> selectedTrips.contains(index) })
             notifyItemChanged(position)
@@ -47,7 +47,7 @@ class TripAdapter(
         }
 
         holder.itemView.setOnClickListener {
-            // Απλά επιλέγουμε ή αφαιρούμε την επιλογή
+
             if (selectedTrips.contains(position)) {
                 selectedTrips.remove(position)
             } else {
