@@ -16,3 +16,4 @@ local.properties
 app/google-services.json.kotlin/errors/
 .kotlin/errors/
 app/google-services.backup.json
+app/google-services.json
